@@ -1,14 +1,13 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import MissionForm from "./components/mission_form";
-import SavingMissionReview from "./pages/saving_mission_review";
+
 import React from "react";
 import { CssBaseline, Box, Container } from "@mui/material";
 import { Outlet, useLocation } from "react-router-dom";
 import NavigationBar from "./components/nav";
-import CorporateLayout from "./components/corporate_layout"; // Ensure this matches your file name
-import MissionForm from './components/mission_form';
-        
 import "./App.css";
+//import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+//import MissionForm from "./components/mission_form";
+//import SavingMissionReview from "./pages/saving_mission_review";
+
 
 
 // Debug Component to Log Current Location
@@ -21,7 +20,6 @@ const DebugLocation: React.FC = () => {
 // Layout Component for Navigation and Main Content
 const App: React.FC = () => {
   return (
-
     <>
       <CssBaseline />
       <NavigationBar />
@@ -50,7 +48,12 @@ const App: React.FC = () => {
         </Box>
       </Box>
     </>
->>>>>>> 592b1cd9e1f4c359a3ab2b755e97c3264bb961b4
+    // <Router>
+    //   <Routes>
+    //     <Route path="/" element={<MissionForm />} />
+    //     <Route path="/saving_mission_review" element={<SavingMissionReview />} />
+    //   </Routes>
+    // </Router>
   );
 };
 
