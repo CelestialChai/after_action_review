@@ -3,6 +3,8 @@ import type {Request, Response} from 'express';
 import User from '../models/User.js';
 //import sign token function from auth
 import {signToken} from '../services/auth.js';
+//import report model
+import Report from '../models/Report.js';
 
 // get a single user by either their id or their username
 export const getSingleUser= async (req: Request, res: Response) => {
@@ -48,11 +50,15 @@ export const login = async (req: Request, res: Response) => {
 export const newMission= async(req: Request, res: Response) => {
     const report= await Report.create(req.body);
 
-    if (!report) {
-        return res.status(400).json({ message: 'Something is wrong!'});
+        if (!report) {
+            return res.status(400).json({ message: 'Report creation failed!' });
+        }
+
+        return res.json({ report });
+    } catch (error) {
+        return res.status(500).json({ message: 'Server error', error: (error as Error).message });
     }
-    return res.json({report});
-}
+};
 
 export const deleteMission= async (req: Request, res: Response) => {
     const userUpdate= await User.findOneAndUpdate(
