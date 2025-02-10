@@ -1,31 +1,26 @@
-import React, { useEffect, useState } from "react";
-import { Container, Typography, Box, Button, Paper } from "@mui/material";
+import { useState } from "react";
+import { useQuery, useMutation } from "@apollo/client";
+import { GET_MISSIONS, DELETE_MISSION } from "../graphql/queries";
+import { Container, Typography, Button, Paper, Dialog, DialogActions, DialogTitle } from "@mui/material";
 
 const MyReviews = () => {
-  const [missions, setMissions] = useState([]);
+  const { loading, error, data, refetch } = useQuery(GET_MISSIONS);
+  const [deleteMission] = useMutation(DELETE_MISSION, {
+    onCompleted: () => {
+      alert("Mission deleted successfully!");
+      refetch(); // Refresh mission list
+    },
+    onError: (err) => {
+      console.error("❌ Error deleting mission:", err);
+      alert("Error deleting mission.");
+    },
+  });
 
-  useEffect(() => {
-    const fetchMissions = async () => {
-      try {
-        const response = await fetch("http://localhost:5000/api/missions/all", {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`, // Get token from localStorage
-          },
-        });
+  const [selectedMission, setSelectedMission] = useState<string | null>(null);
+  const [openDialog, setOpenDialog] = useState(false);
 
-        const data = await response.json();
-        if (response.ok) {
-          setMissions(data);
-        } else {
-          alert("Failed to retrieve missions.");
-        }
-      } catch (error) {
-        console.error("Error fetching missions:", error);
-      }
-    };
-
-    fetchMissions();
-  }, []);
+  if (loading) return <Typography>Loading missions...</Typography>;
+  if (error) return <Typography color="error">Error loading missions.</Typography>;
 
   return (
     <Container maxWidth="md">
@@ -33,28 +28,46 @@ const MyReviews = () => {
         My Saved Missions
       </Typography>
 
-      {missions.length === 0 ? (
+      {data.missions.length === 0 ? (
         <Typography align="center">No saved missions found.</Typography>
       ) : (
-        missions.map((mission) => (
+        data.missions.map((mission: { _id: string; name: string; startDate: string; unit: { name: string } }) => (
           <Paper key={mission._id} sx={{ padding: 3, marginBottom: 2 }}>
-            <Typography variant="h6">
-              <strong>{mission.missionName}</strong>
-            </Typography>
-            <Typography>Date: {new Date(mission.missionDate).toDateString()}</Typography>
-            <Typography>Unit: {mission.missionUnit}</Typography>
+            <Typography variant="h6">{mission.name}</Typography>
+            <Typography>Date: {new Date(mission.startDate).toDateString()}</Typography>
+            <Typography>Unit: {mission.unit.name}</Typography>
 
             <Button
               variant="contained"
-              color="primary"
-              onClick={() => alert("View Mission Details Coming Soon!")}
+              color="error"
+              onClick={() => {
+                setSelectedMission(mission._id);
+                setOpenDialog(true);
+              }}
               sx={{ mt: 2 }}
             >
-              View Details
+              Delete
             </Button>
           </Paper>
         ))
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
+        <DialogTitle>Are you sure you want to delete this mission?</DialogTitle>
+        <DialogActions>
+          <Button onClick={() => setOpenDialog(false)}>Cancel</Button>
+          <Button
+            onClick={() => {
+              deleteMission({ variables: { id: selectedMission } });
+              setOpenDialog(false);
+            }}
+            color="error"
+          >
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };

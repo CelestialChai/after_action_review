@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { useMutation } from "@apollo/client";
+import { SAVE_MISSION } from "../graphql/mutations";
 import { useNavigate } from "react-router-dom";
 import {
   Container,
@@ -31,6 +33,12 @@ interface EventEntry {
     whoWillFix: string;
     whenWillFix: string;
   }[]; // <-- Change improveDetails to an array of objects
+  improveDetailsArray?: {
+    observation: string;
+    howToFix: string;
+    whoWillFix: string;
+    whenWillFix: string;
+  }[];
 }
 
 // Main mission form component
@@ -45,12 +53,14 @@ const MissionForm: React.FC = () => {
   const [currentEvent, setCurrentEvent] = useState<EventEntry>({
     eventName: "",
     type: null,
-    improveDetails: {
-      observation: "",
-      howToFix: "",
-      whoWillFix: "",
-      whenWillFix: "",
-    },
+    improveDetails: [
+      {
+        observation: "",
+        howToFix: "",
+        whoWillFix: "",
+        whenWillFix: "",
+      },
+    ],
   });
 
   const [summary, setSummary] = useState("");
@@ -87,12 +97,14 @@ const MissionForm: React.FC = () => {
         selectedType === "sustain" ? [""] : currentEvent.sustainDetails, // Start with 1 sustain field
       improveDetails:
         selectedType === "improve"
-          ? {
-              observation: [""],
-              howToFix: [""],
-              whoWillFix: [""],
-              whenWillFix: [""],
-            }
+          ? [
+              {
+                observation: "",
+                howToFix: "",
+                whoWillFix: "",
+                whenWillFix: "",
+              },
+            ]
           : currentEvent.improveDetails, // Start with 1 set of improve fields
     });
   };
@@ -101,18 +113,20 @@ const MissionForm: React.FC = () => {
     if (currentEvent.type === "improve") {
       const updatedImprovements = [
         ...(currentEvent.improveDetailsArray || []),
-        currentEvent.improveDetails,
+        ...currentEvent.improveDetails,
       ];
 
       setCurrentEvent({
         ...currentEvent,
         improveDetailsArray: updatedImprovements,
-        improveDetails: {
-          observation: "",
-          howToFix: "",
-          whoWillFix: "",
-          whenWillFix: "",
-        },
+        improveDetails: [
+          {
+            observation: "",
+            howToFix: "",
+            whoWillFix: "",
+            whenWillFix: "",
+          },
+        ],
       });
 
       // Show the saved message
@@ -126,22 +140,6 @@ const MissionForm: React.FC = () => {
   };
 
   // Handles changes to improvement details
-  const handleImproveDetailsChange =
-    (index: number, field: keyof EventEntry["improveDetails"][0]) =>
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      if (currentEvent.type === "improve") {
-        const updatedImprovements = [...(currentEvent.improveDetails || [])];
-        updatedImprovements[index] = {
-          ...updatedImprovements[index],
-          [field]: e.target.value,
-        };
-
-        setCurrentEvent({
-          ...currentEvent,
-          improveDetails: updatedImprovements,
-        });
-      }
-    };
 
   // Handles changes to sustain details
   const handleSustainChange = (index: number, value: string) => {
@@ -170,7 +168,7 @@ const MissionForm: React.FC = () => {
     // Ensure the last improvement is saved before adding event
     const updatedImprovements = [
       ...(currentEvent.improveDetailsArray || []),
-      { ...currentEvent.improveDetails } // Include the most recent improvement
+      ...currentEvent.improveDetails,
     ];
 
     // Save the event with both sustains and all improvements
@@ -178,7 +176,7 @@ const MissionForm: React.FC = () => {
       eventName: currentEvent.eventName,
       type: currentEvent.type,
       sustainDetails: [...(currentEvent.sustainDetails || [])],
-      improveDetailsArray: updatedImprovements, // Now includes the last entered improvement
+      improveDetailsArray: updatedImprovements,
     };
 
     setEvents((prevEvents) => [...prevEvents, newEvent]);
@@ -189,7 +187,7 @@ const MissionForm: React.FC = () => {
       type: null,
       sustainDetails: [""],
       improveDetailsArray: [],
-      improveDetails: { observation: "", howToFix: "", whoWillFix: "", whenWillFix: "" },
+      improveDetails: [{ observation: "", howToFix: "", whoWillFix: "", whenWillFix: "" }],
     });
   };
 
@@ -223,15 +221,13 @@ const MissionForm: React.FC = () => {
   });
 
   const handleSaveMission = () => {
-    // Check for missing fields
     const newErrors = {
       missionName: !mission.missionName,
       missionDate: !mission.missionDate,
       missionUnit: !mission.missionUnit,
-      summary: showSummaryHero && !summary,
-      hero: showSummaryHero && !hero,
+      summary: !summary,
+      hero: !hero,
     };
-
     setErrors(newErrors);
 
     // If any field is missing, show an alert and stop submission
@@ -241,20 +237,37 @@ const MissionForm: React.FC = () => {
     }
 
     // If all fields are valid, save the mission and navigate to the review page
-    alert("Mission form has been saved successfully! ✅");
-    navigate("/save_mission", { state: { mission, events: [...events], summary, hero } });
+    saveMission({
+      variables: {
+        input: {
+          name: mission.missionName,
+          startDate: mission.missionDate.toISOString(),
+          endDate: mission.missionDate.toISOString(),
+          unitId: mission.missionUnit,
+        },
+      },
+    });
   };
 
 
-  const formatLabel = (key: string) => {
-    const labelMap: { [key: string]: string } = {
-      observation: "Observation",
-      howToFix: "How to Fix",
-      whoWillFix: "Who Will Fix It",
-      whenWillFix: "When Will It Be Fixed",
-    };
-    return labelMap[key] || key; // Default to original key if not found
-  };
+
+  const [saveMission] = useMutation(SAVE_MISSION, {
+    onCompleted: () => {
+      alert("Mission saved successfully!");
+      navigate("/save_mission", {
+        state: {
+          mission,
+          events,
+          summary,
+          hero,
+        },
+      });
+    },
+    onError: (error) => {
+      console.error("Error saving mission:", error);
+      alert("Error saving mission. Please try again.");
+    },
+  });
 
   return (
     <Box
@@ -387,7 +400,7 @@ const MissionForm: React.FC = () => {
                       fullWidth
                       required
                     />
-                    {currentEvent.sustainDetails.length > 1 && ( // Only show remove button if there's more than one
+                    {(currentEvent.sustainDetails?.length ?? 0) > 1 && ( // Only show remove button if there's more than one
                       <Button
                         onClick={() => removeSustain(index)}
                         variant="outlined"
@@ -422,14 +435,19 @@ const MissionForm: React.FC = () => {
               <Box sx={{ my: 2 }}>
                 <TextField
                   label="Observation"
-                  value={currentEvent.improveDetails?.observation || ""}
+                  value={currentEvent.improveDetails?.[0]?.observation || ""}
                   onChange={(e) =>
                     setCurrentEvent({
                       ...currentEvent,
-                      improveDetails: {
-                        ...currentEvent.improveDetails,
-                        observation: e.target.value,
-                      },
+                      improveDetails: [
+                        {
+                          ...currentEvent.improveDetails?.[0],
+                          observation: e.target.value,
+                          howToFix: currentEvent.improveDetails?.[0]?.howToFix || "",
+                          whoWillFix: currentEvent.improveDetails?.[0]?.whoWillFix || "",
+                          whenWillFix: currentEvent.improveDetails?.[0]?.whenWillFix || "",
+                        },
+                      ],
                     })
                   }
                   fullWidth
@@ -437,14 +455,18 @@ const MissionForm: React.FC = () => {
                 />
                 <TextField
                   label="How to Fix"
-                  value={currentEvent.improveDetails?.howToFix || ""}
+                  value={currentEvent.improveDetails?.[0]?.howToFix || ""}
                   onChange={(e) =>
                     setCurrentEvent({
                       ...currentEvent,
-                      improveDetails: {
-                        ...currentEvent.improveDetails,
-                        howToFix: e.target.value,
-                      },
+                      improveDetails: [
+                        {
+                          observation: currentEvent.improveDetails?.[0]?.observation || "",
+                          howToFix: e.target.value,
+                          whoWillFix: currentEvent.improveDetails?.[0]?.whoWillFix || "",
+                          whenWillFix: currentEvent.improveDetails?.[0]?.whenWillFix || "",
+                        },
+                      ],
                     })
                   }
                   fullWidth
@@ -452,14 +474,18 @@ const MissionForm: React.FC = () => {
                 />
                 <TextField
                   label="Who Will Fix?"
-                  value={currentEvent.improveDetails?.whoWillFix || ""}
+                  value={currentEvent.improveDetails?.[0]?.whoWillFix || ""}
                   onChange={(e) =>
                     setCurrentEvent({
                       ...currentEvent,
-                      improveDetails: {
-                        ...currentEvent.improveDetails,
-                        whoWillFix: e.target.value,
-                      },
+                      improveDetails: [
+                        {
+                          observation: currentEvent.improveDetails?.[0]?.observation || "",
+                          howToFix: currentEvent.improveDetails?.[0]?.howToFix || "",
+                          whoWillFix: e.target.value,
+                          whenWillFix: currentEvent.improveDetails?.[0]?.whenWillFix || "",
+                        },
+                      ],
                     })
                   }
                   fullWidth
@@ -467,14 +493,18 @@ const MissionForm: React.FC = () => {
                 />
                 <TextField
                   label="When Will It Be Fixed?"
-                  value={currentEvent.improveDetails?.whenWillFix || ""}
+                  value={currentEvent.improveDetails?.[0]?.whenWillFix || ""}
                   onChange={(e) =>
                     setCurrentEvent({
                       ...currentEvent,
-                      improveDetails: {
-                        ...currentEvent.improveDetails,
-                        whenWillFix: e.target.value,
-                      },
+                      improveDetails: [
+                        {
+                          observation: currentEvent.improveDetails?.[0]?.observation || "",
+                          howToFix: currentEvent.improveDetails?.[0]?.howToFix || "",
+                          whoWillFix: currentEvent.improveDetails?.[0]?.whoWillFix || "",
+                          whenWillFix: e.target.value,
+                        },
+                      ],
                     })
                   }
                   fullWidth
@@ -560,10 +590,10 @@ const MissionForm: React.FC = () => {
     <Typography variant="h6">{event.eventName}</Typography>
 
     {/* Display Sustain Details */}
-    {event.sustainDetails?.length > 0 && event.sustainDetails[0] !== "" && (
+    {(event.sustainDetails?.length ?? 0) > 0 && event.sustainDetails?.[0] !== "" && (
       <>
         <Typography variant="subtitle1"><strong>Sustain:</strong></Typography>
-        {event.sustainDetails.map((sustain, i) => (
+        {(event.sustainDetails ?? []).map((sustain, i) => (
           <Typography key={i}>- {sustain}</Typography>
         ))}
       </>

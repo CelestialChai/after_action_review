@@ -29,3 +29,22 @@ export const GET_USER = gql`
     }
   }
 `;
+
+export const GET_MISSIONS = gql`
+  query GetMissions {
+    missions {
+      _id
+      name
+      startDate
+      endDate
+    }
+  }
+`;
+
+export const DELETE_MISSION = gql`
+  mutation DeleteMission($id: ID!) {
+    deleteMission(id: $id) {
+      _id
+    }
+  }
+`;

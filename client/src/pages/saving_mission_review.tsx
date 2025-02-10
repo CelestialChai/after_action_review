@@ -75,7 +75,6 @@ const ReviewPage = () => {
           alignItems: "center",
         }}
       >
-        {/* SINGLE BORDER AROUND REVIEW SECTION */}
         <Box
           ref={reviewRef}
           sx={{
@@ -83,16 +82,15 @@ const ReviewPage = () => {
             width: "100%",
             maxWidth: "800px",
             textAlign: "center",
-            border: "2px solid #ddd", // ONLY ONE BORDER
+            border: "2px solid #ddd",
             borderRadius: "10px",
-            marginBottom: 4, // Space before buttons
+            marginBottom: 4,
           }}
         >
           <Typography variant="h4" align="center" gutterBottom>
             Mission Review
           </Typography>
 
-          {/* Mission Details */}
           {mission ? (
             <Box sx={{ borderBottom: "2px solid gray", pb: 2, mb: 3 }}>
               <Typography variant="h6">
@@ -109,7 +107,6 @@ const ReviewPage = () => {
             <Typography color="error">⚠️ No mission data found.</Typography>
           )}
 
-          {/* Events Section */}
           {events && events.length > 0 ? (
             events.map((event, index) => (
               <Box
@@ -124,7 +121,6 @@ const ReviewPage = () => {
               >
                 <Typography variant="h5">{event.eventName}</Typography>
 
-                {/* Sustain Section */}
                 {event.sustainDetails && event.sustainDetails.length > 0 && (
                   <Box sx={{ mt: 1 }}>
                     <Typography variant="h6">Sustain Details:</Typography>
@@ -134,7 +130,6 @@ const ReviewPage = () => {
                   </Box>
                 )}
 
-                {/* Improvement Section */}
                 {event.improveDetailsArray &&
                   event.improveDetailsArray.length > 0 && (
                     <Box sx={{ mt: 2 }}>
@@ -170,7 +165,6 @@ const ReviewPage = () => {
             <Typography color="error">⚠️ No events found.</Typography>
           )}
 
-          {/* Summary & Hero Section */}
           <Box
             sx={{
               mt: 3,
@@ -191,7 +185,6 @@ const ReviewPage = () => {
           </Box>
         </Box>
 
-        {/* BUTTONS ARE OUTSIDE THE BORDER NOW */}
         <Box
           sx={{
             display: "flex",
