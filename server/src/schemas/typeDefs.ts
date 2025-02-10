@@ -89,8 +89,14 @@ const typeDefs = gql`
     createUnit(input: CreateUnitInput!): Unit
     updateUnit(id: ID!, input: UpdateUnitInput!): Unit
     deleteUnit(id: ID!): Unit
+
+    # ✅ ADDED: Mutation to create a mission
     createMission(input: CreateMissionInput!): Mission
+
+    # ✅ ADDED: Mutation to update a mission
     updateMission(id: ID!, input: UpdateMissionInput!): Mission
+
+    # ✅ ADDED: Mutation to delete a mission
     deleteMission(id: ID!): Mission
   }
 `;
