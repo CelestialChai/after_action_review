@@ -1,32 +1,9 @@
-import { ApolloClient, InMemoryCache, ApolloProvider, createHttpLink } from "@apollo/client";
-import { setContext } from "@apollo/client/link/context";
+import React from "react";
 import { CssBaseline, Box, Container } from "@mui/material";
 import { Outlet, useLocation } from "react-router-dom";
 import NavigationBar from "./components/nav";
 import "./App.css";
-
-// Create HTTP link for Apollo Client
-const httpLink = createHttpLink({
-  uri: "/graphql",
-  credentials: "include", // Allows cookies and authorization headers
-});
-
-// Set Auth Context for Apollo Client
-const authLink = setContext((_, { headers }) => {
-  const token = localStorage.getItem("id_token");
-  return {
-    headers: {
-      ...headers,
-      authorization: token ? `Bearer ${token}` : "",
-    },
-  };
-});
-
-// Initialize Apollo Client
-const client = new ApolloClient({
-  link: authLink.concat(httpLink),
-  cache: new InMemoryCache(),
-});
+import Footer from "./components/footer";
 
 // Debug Component to Log Current Location
 const DebugLocation: React.FC = () => {
@@ -37,15 +14,15 @@ const DebugLocation: React.FC = () => {
 
 const App: React.FC = () => {
   return (
-    <ApolloProvider client={client}>
+    <>
       <CssBaseline />
       <NavigationBar />
       <Box
         sx={{
           display: "flex",
           flexDirection: "column",
-          minHeight: "100vh", // ✅ minHeight instead of height
-          overflow: "auto", // ✅ allow scrolling
+          height: "100vh", // Limit total height to prevent scrolling
+          // overflow: "hidden",
         }}
       >
         {/* Main Content Area */}
@@ -68,19 +45,9 @@ const App: React.FC = () => {
         </Container>
 
         {/* Footer at the bottom */}
-        <Box
-          component="footer"
-          sx={{
-            width: "100vw",
-            backgroundColor: "#f5f5f5",
-            py: 2,
-            textAlign: "center",
-          }}
-        >
-          <Container maxWidth="lg">© {new Date().getFullYear()} AAR Platform</Container>
-        </Box>
+        <Footer />
       </Box>
-    </ApolloProvider>
+    </>
   );
 };
 

@@ -1,4 +1,4 @@
-import { gql } from 'graphql-tag';
+import { gql } from "graphql-tag";
 
 const typeDefs = gql`
   enum Role {
@@ -9,27 +9,8 @@ const typeDefs = gql`
   type User {
     _id: ID!
     username: String!
-    email: String!
+    email: String
     role: Role!
-    unit: Unit
-  }
-
-  type Auth {
-    token: String!
-    user: User!
-  }
-
-  input RegisterInput {
-    username: String!
-    email: String!
-    password: String!
-    role: Role = USER
-    unitId: ID
-  }
-
-  input LoginInput {
-    email: String!
-    password: String!
   }
 
   type Unit {
@@ -40,57 +21,88 @@ const typeDefs = gql`
     updatedAt: String
   }
 
+  type Auth {
+    token: ID!
+    user: User
+  }
+
+  input RegisterInput {
+    username: String!
+    email: String!
+    password: String!
+    role: Role = USER
+  }
+
+  input LoginInput {
+    email: String!
+    password: String!
+  }
+
+  input ImproveInput {
+    observation: String
+    howToFix: String
+    whoWillFix: String
+    whenWillFix: String
+  }
+
+  input MissionInput {
+    missionName: String
+    missionDate: String
+    missionUnit: String
+    summary: String
+    hero: String
+    events: [EventInput]
+  }
+
+  input EventInput {
+    eventName: String
+    sustainDetails: [String]
+    improveDetailsArray: [ImproveInput]
+  }
+
+  type Improvement {
+    observation: String
+    howToFix: String
+    whoWillFix: String
+    whenWillFix: String
+  }
+
+  type Event {
+    eventName: String
+    sustainDetails: [String]
+    improveDetailsArray: [Improvement]
+  }
+
   type Mission {
     _id: ID!
-    name: String!
-    startDate: String!
-    endDate: String!
-    unit: Unit!
+    missionName: String
+    missionDate: String
+    missionUnit: String
+    summary: String
+    hero: String
+    events: [Event]
+    user: ID!
     createdAt: String
     updatedAt: String
   }
 
-  input CreateUnitInput {
-    name: String!
-  }
-
-  input UpdateUnitInput {
-    name: String
-  }
-
-  input CreateMissionInput {
-    name: String!
-    startDate: String!
-    endDate: String!
-    unitId: ID!
-  }
-
-  input UpdateMissionInput {
-    name: String
-    startDate: String
-    endDate: String
-    unitId: ID
-  }
-
   type Query {
-    me: User  # ✅ FIX: Changed from Auth to User
-    users: [User]
-    user(userId: ID!): User
-    units: [Unit]!
-    unit(id: ID!): Unit
-    missions: [Mission]!
-    mission(id: ID!): Mission
-    missionsByUnit(unitId: ID!): [Mission]!
-  }
+  me: User
+  users: [User]              
+  user(userId: ID!): User    
+  units: [Unit]              
+  unit(id: ID!): Unit   
+  userMissions: [Mission]!     
+  missions: [Mission]        
+  mission(id: ID!): Mission  
+  missionsByUnit(unitId: ID!): [Mission] 
+}
+
 
   type Mutation {
     register(registerInput: RegisterInput!): Auth
     login(loginInput: LoginInput!): Auth
-    createUnit(input: CreateUnitInput!): Unit
-    updateUnit(id: ID!, input: UpdateUnitInput!): Unit
-    deleteUnit(id: ID!): Unit
-    createMission(input: CreateMissionInput!): Mission
-    updateMission(id: ID!, input: UpdateMissionInput!): Mission
+    saveMission(input: MissionInput!): Mission
     deleteMission(id: ID!): Mission
   }
 `;

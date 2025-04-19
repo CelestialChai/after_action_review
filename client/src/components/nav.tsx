@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from "react";
+// src/components/NavigationBar.tsx
+
+import React, { useState } from "react";
 import {
   AppBar,
   Toolbar,
@@ -12,123 +14,190 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
+  useTheme,
+  useMediaQuery,
 } from "@mui/material";
 import {
-  Home,
+  Home as HomeIcon,
   RateReview,
   LibraryBooks,
   ExitToApp,
   Login as LoginIcon,
+  AccountCircle,
   Menu as MenuIcon,
 } from "@mui/icons-material";
-import { Link, useNavigate, useLocation } from "react-router-dom"; // ✅ Import `useLocation`
-import { useTheme, useMediaQuery } from "@mui/material";
+import { Link, useNavigate } from "react-router-dom";
+import Auth from "../utils/auth";
 
 const NavigationBar: React.FC = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem("token"));
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const isLoggedIn = Auth.loggedIn();
   const navigate = useNavigate();
-  const location = useLocation(); // ✅ Track location changes
 
-  // ✅ Update `isAuthenticated` when `location` changes (ensures state updates after login/logout)
-  useEffect(() => {
-    setIsAuthenticated(!!localStorage.getItem("token"));
-  }, [location]);
-
-  // ✅ Handle logout
   const handleLogout = () => {
-    localStorage.removeItem("token"); // Clear token
-    setIsAuthenticated(false); // Update state
-    navigate("/login"); // Redirect to login page
+    Auth.logout();
+    navigate("/home");
   };
 
   const menuItems = [
-    { text: "Home", icon: <Home />, path: "/" },
-    { text: "New Review", icon: <RateReview />, path: "/review" },
+    { text: "Home", icon: <HomeIcon />, path: "/home" },
+    { text: "New Review", icon: <RateReview />, path: "/mission/new" },
     { text: "My Reviews", icon: <LibraryBooks />, path: "/myreviews" },
-
   ];
 
+  const handleDrawerToggle = () => {
+    setMobileOpen(!mobileOpen);
+  };
+
+  const desktopButtons = (
+    <Box sx={{ display: "flex", alignItems: "center" }}>
+      {menuItems.map(({ text, icon, path }) => (
+        <Button
+          key={text}
+          component={Link as React.ElementType}
+          to={path}
+          startIcon={icon}
+          color="inherit"
+          sx={{
+            mx: 1,
+            textTransform: "none",
+            "&:hover": { backgroundColor: "primary.dark", color: "white" },
+          }}
+        >
+          {text}
+        </Button>
+      ))}
+
+      {isLoggedIn ? (
+        <Button
+          onClick={handleLogout}
+          startIcon={<ExitToApp />}
+          color="inherit"
+          sx={{
+            mx: 1,
+            textTransform: "none",
+            "&:hover": { backgroundColor: "primary.dark", color: "white" },
+          }}
+        >
+          Log Out
+        </Button>
+      ) : (
+        <>
+          <Button
+            component={Link as React.ElementType}
+            to="/login"
+            startIcon={<LoginIcon />}
+            color="inherit"
+            sx={{
+              mx: 1,
+              textTransform: "none",
+              "&:hover": { backgroundColor: "primary.dark", color: "white" },
+            }}
+          >
+            Log In
+          </Button>
+          <Button
+            component={Link as React.ElementType}
+            to="/register"
+            startIcon={<AccountCircle />}
+            color="inherit"
+            sx={{
+              mx: 1,
+              textTransform: "none",
+              "&:hover": { backgroundColor: "primary.dark", color: "white" },
+            }}
+          >
+            Sign Up
+          </Button>
+        </>
+      )}
+    </Box>
+  );
+
+  const mobileDrawer = (
+    <Drawer
+      anchor="right"
+      open={mobileOpen}
+      onClose={handleDrawerToggle}
+    >
+      <List sx={{ width: 250 }}>
+        {menuItems.map(({ text, icon, path }) => (
+          <ListItem
+            key={text}
+            button
+            component={Link as React.ElementType}
+            to={path}
+            onClick={handleDrawerToggle}
+          >
+            <ListItemIcon>{icon}</ListItemIcon>
+            <ListItemText primary={text} />
+          </ListItem>
+        ))}
+
+        {isLoggedIn ? (
+          <ListItem
+            button
+            onClick={() => {
+              handleLogout();
+              handleDrawerToggle();
+            }}
+          >
+            <ListItemIcon>
+              <ExitToApp />
+            </ListItemIcon>
+            <ListItemText primary="Log Out" />
+          </ListItem>
+        ) : (
+          <>
+            <ListItem
+              button
+              component={Link as React.ElementType}
+              to="/login"
+              onClick={handleDrawerToggle}
+            >
+              <ListItemIcon>
+                <LoginIcon />
+              </ListItemIcon>
+              <ListItemText primary="Log In" />
+            </ListItem>
+            <ListItem
+              button
+              component={Link as React.ElementType}
+              to="/register"
+              onClick={handleDrawerToggle}
+            >
+              <ListItemIcon>
+                <AccountCircle />
+              </ListItemIcon>
+              <ListItemText primary="Sign Up" />
+            </ListItem>
+          </>
+        )}
+      </List>
+    </Drawer>
+  );
+
   return (
-    <AppBar position="static" color="primary">
+    <AppBar position="fixed" color="primary" sx={{ zIndex: 1301 }}>
       <Container maxWidth="lg">
         <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
-          {/* Title */}
           <Typography variant="h6" sx={{ fontSize: "1.8rem", fontWeight: "bold" }}>
             AAR Platform
           </Typography>
 
-          {/* Desktop Menu */}
-          {!isMobile ? (
-            <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
-              {menuItems.map((item) => (
-                <Button
-                  component={Link as React.ElementType}
-                  to={item.path}
-                  startIcon={item.icon}
-                  color="inherit"
-                  sx={{ mx: 1, "&:hover": { backgroundColor: "primary.dark", color: "white" } }}
-                  key={item.text}
-                >
-                  {item.text}
-                </Button>
-              ))}
-              {!isAuthenticated ? (
-                <Button component={Link as React.ElementType} to="/login" startIcon={<LoginIcon />} color="inherit" sx={{ mx: 1 }}>
-                  Login
-                </Button>
-              ) : (
-                <Button startIcon={<ExitToApp />} color="inherit" sx={{ mx: 1 }} onClick={handleLogout}>
-                  Logout
-                </Button>
-              )}
-            </Box>
-          ) : (
-            <IconButton edge="end" color="inherit" onClick={() => setMobileOpen(!mobileOpen)}>
+          {isMobile ? (
+            <IconButton edge="end" color="inherit" onClick={handleDrawerToggle}>
               <MenuIcon />
             </IconButton>
+          ) : (
+            desktopButtons
           )}
         </Toolbar>
       </Container>
 
-      {/* Mobile Drawer */}
-      <Drawer anchor="right" open={mobileOpen} onClose={() => setMobileOpen(false)}>
-        <List sx={{ width: 250 }}>
-          {menuItems.map((item) => (
-            <ListItem button component={Link as React.ElementType} to={item.path} key={item.text} onClick={() => setMobileOpen(false)}>
-              <ListItemIcon>{item.icon}</ListItemIcon>
-              <ListItemText primary={item.text} />
-            </ListItem>
-          ))}
-          {!isAuthenticated ? (
-            <ListItem button component={Link as React.ElementType} to="/login" onClick={() => setMobileOpen(false)}>
-              <ListItemIcon>
-                <LoginIcon />
-              </ListItemIcon>
-              <ListItemText primary="Login" />
-            </ListItem>
-          ) : (
-            <ListItem
-              component="div"
-              onClick={handleLogout}
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                width: "100%",
-                textAlign: "left",
-                cursor: "pointer",
-              }}
-            >
-              <ListItemIcon>
-                <ExitToApp />
-              </ListItemIcon>
-              <ListItemText primary="Logout" />
-            </ListItem>
-          )}
-        </List>
-      </Drawer>
+      {mobileDrawer}
     </AppBar>
   );
 };
